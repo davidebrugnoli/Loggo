@@ -1,7 +1,6 @@
 # Loggo - Modular Logging Library for .NET
 
-[![NuGet](https://img.shields.io/nuget/v/Loggo.svg)](https://www.nuget.org/packages/Loggo/)
-[![GitHub stars](https://img.shields.io/github/stars/your-username/Loggo.svg?style=social&label=Star&maxAge=2592000)](https://github.com/your-username/Loggo)
+[![GitHub stars](https://img.shields.io/github/stars/your-username/Loggo.svg?style=social&label=Star&maxAge=2592000)](https://github.com/davidebrugnoli/Loggo)
 
 Loggo is a powerful and highly modular logging library for .NET applications. It allows you to easily integrate and manage multiple logging providers, such as NLog, Log4Net, and Elasticsearch, in a seamless and flexible manner.
 
