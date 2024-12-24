@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34902.65
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Loggo", "Loggo\Loggo.csproj", "{B7F7AE11-7234-407E-BC2B-A47CC8194A32}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{876321DA-A4A4-4ECA-818D-1BD6AE69D860}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoggoConsoleSample", "LoggoConsoleSample\LoggoConsoleSample.csproj", "{040357EF-026D-4622-AEC7-3817FB1A9B64}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7F7AE11-7234-407E-BC2B-A47CC8194A32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7F7AE11-7234-407E-BC2B-A47CC8194A32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7F7AE11-7234-407E-BC2B-A47CC8194A32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7F7AE11-7234-407E-BC2B-A47CC8194A32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{040357EF-026D-4622-AEC7-3817FB1A9B64}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{040357EF-026D-4622-AEC7-3817FB1A9B64}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{040357EF-026D-4622-AEC7-3817FB1A9B64}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{040357EF-026D-4622-AEC7-3817FB1A9B64}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{040357EF-026D-4622-AEC7-3817FB1A9B64} = {876321DA-A4A4-4ECA-818D-1BD6AE69D860}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8A66CB71-3D2F-4736-933A-C7D45D77C859}
+	EndGlobalSection
+EndGlobal
