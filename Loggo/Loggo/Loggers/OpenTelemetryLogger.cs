@@ -1,12 +1,9 @@
 ﻿using Loggo.Providers.Interfaces;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using OpenTelemetry.Logs;
 using System;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Flurl.Http;
+using Loggo.Models;
+using Loggo.Providers.Implementations;
 
 namespace Loggo.Loggers
 {
@@ -167,110 +164,5 @@ namespace Loggo.Loggers
             Warn(message);
             return Task.CompletedTask;
         }
-    }
-    public sealed class OtelLokiLoggerProvider : OpenTelemetryLoggerProvider
-    {
-        public OtelLokiLoggerProvider() : base()
-        {
-        }
-        public OtelLokiLoggerProvider(OpenTelemetryLoggerOptions options) : base(options)
-        {
-        }
-        public OpenTelemetryLoggerProvider EnableGrafanaLoki(string baseUrl = null)
-        {
-            if (string.IsNullOrEmpty(baseUrl) == false)
-            {
-                _lokiBaseUrl = baseUrl;
-            }
-            return this;
-        }
-        public ILogger CreateLogger(string categoryName, string orgId)
-        {
-            return new OtelLokiLogger(categoryName, orgId, this);
-        }
-        public override async void Export(LogRecord logRecord)
-        {
-            if (string.IsNullOrEmpty(_lokiBaseUrl))
-            {
-                throw new InvalidOperationException("Loki base URL is not configured. Call EnableGrafanaLoki to configure it.");
-            }
-
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() * 1_000_000; // Convert to nanoseconds
-
-
-            var payload = new
-            {
-                streams = new[]
-                {
-                new
-                {
-                    stream = new { 
-                        level = logRecord.LogLevel.ToString(), 
-                        category =logRecord.CategoryName,
-                        traceId = logRecord.EventId.Id.ToString()
-                    },
-                    values = new[]
-                    {
-                        new[] { timestamp.ToString(), logRecord.Message }
-                    }
-                }
-            }
-            };
-
-            var json = JsonConvert.SerializeObject(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            await ($"{_lokiBaseUrl}/loki/api/v1/push")
-                .WithHeader("X-Scope-OrgID", logRecord.OrganizationId)
-                .PostAsync(content);
-        }
-    }
-    public class OpenTelemetryLoggerProvider : ILoggerProvider
-    {
-        protected readonly OpenTelemetryLoggerOptions _options;
-        /// <summary>
-        /// default http://localhost:3100
-        /// </summary>
-        protected string _lokiBaseUrl = "http://localhost:3100";
-        protected readonly HttpClient _httpClient;
-
-        public OpenTelemetryLoggerProvider()
-        {
-            if (_options == null)
-            {
-                //default options
-                _options = new OpenTelemetryLoggerOptions();
-            }
-            _httpClient = new HttpClient();
-        }
-        public OpenTelemetryLoggerProvider(OpenTelemetryLoggerOptions options) : this()
-        {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-        }
-
-        public virtual ILogger CreateLogger(string categoryName)
-        {
-            return new OpenTelemetryLogger(categoryName, this);
-        }
-
-        public void Dispose()
-        {
-            _httpClient.Dispose();
-        }
-
-        public virtual void Export(LogRecord logRecord)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class LogRecord
-    {
-        [JsonIgnore]
-        public string OrganizationId { get; set; }
-        public string CategoryName { get; set; }
-        public LogLevel LogLevel { get; set; }
-        public string Message { get; set; }
-        public Exception Exception { get; set; }
-        public EventId EventId { get; set; }
     }
 }

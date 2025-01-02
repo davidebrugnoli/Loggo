@@ -2,13 +2,10 @@
 using log4net.Appender;
 using log4net.Layout;
 using log4net.Repository.Hierarchy;
-using Loggo.Enums;
 using Loggo.Providers.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Loggo.Providers.Implementations
@@ -157,26 +154,26 @@ namespace Loggo.Providers.Implementations
             throw new NotImplementedException();
         }
 
-        public ILogProvider SetSeverity(eLogSeverities level)
+        public ILogProvider SetSeverity(LogLevel level)
         {
             Hierarchy hierarchy = (Hierarchy)LogManager.GetRepository(_name);
             log4net.Core.Level level4net = log4net.Core.Level.All;
             switch (level)
             {
-                case eLogSeverities.Debug:
+                case LogLevel.Debug:
                     level4net = log4net.Core.Level.Debug;
                     break;
-                case eLogSeverities.Info:
+                case LogLevel.Information:
                     level4net = log4net.Core.Level.Info;
                     break;
-                case eLogSeverities.Warn:
+                case LogLevel.Warning:
                     level4net = log4net.Core.Level.Warn;
                     break;
-                case eLogSeverities.Error:
+                case LogLevel.Error:
                     level4net = log4net.Core.Level.Error;
                     break;
-                case eLogSeverities.Fatal:
-                    level4net = log4net.Core.Level.Fatal;
+                case LogLevel.Critical:
+                    level4net = log4net.Core.Level.Critical;
                     break;
                 default:
                     level4net = log4net.Core.Level.All;

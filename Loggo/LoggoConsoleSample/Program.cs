@@ -1,4 +1,5 @@
-﻿using Loggo.Loggers;
+﻿using Loggo;
+using Loggo.Providers.Implementations;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -23,16 +24,19 @@ internal class Program
     static ConcurrentQueue<Order> _orders = new ConcurrentQueue<Order>();
     private static void Main(string[] args)
     {
+        LoggoFactory loggo = new LoggoFactory();
+        loggo.AddProvider(new Loggo.Providers.Implementations.SelilogLoggerProvider(true, "C:\\loggo"));
         var otelOptions = new OpenTelemetry.Logs.OpenTelemetryLoggerOptions()
         {
             IncludeFormattedMessage = true,
             IncludeScopes = false,
             ParseStateValues = false
         };
-        Loggo.Loggers.OtelLokiLoggerProvider provider = new Loggo.Loggers.OtelLokiLoggerProvider();
-        provider.EnableGrafanaLoki();
+        OtelLokiLoggerProvider otelLokiLoggerProvider = new OtelLokiLoggerProvider();
+        otelLokiLoggerProvider.EnableGrafanaLoki();
+        loggo.AddProvider(otelLokiLoggerProvider);
         string org = $"Hamaca1";
-        logger = provider.CreateLogger($"caffetteria_1", org);
+        logger = loggo.CreateLogger(org);
 
         Random random = new Random();
 

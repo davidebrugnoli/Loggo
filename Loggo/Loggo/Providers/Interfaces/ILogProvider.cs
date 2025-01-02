@@ -1,8 +1,4 @@
-﻿using Loggo.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Loggo.Providers.Interfaces
 {
@@ -18,6 +14,6 @@ namespace Loggo.Providers.Interfaces
         ILogProvider WarnSeverity();
         ILogProvider ErrorSeverity();
         ILogProvider FatalSeverity();
-        ILogProvider SetSeverity(eLogSeverities level);
+        ILogProvider SetSeverity(LogLevel level);
     }
 }
