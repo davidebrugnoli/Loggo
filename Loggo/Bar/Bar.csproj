@@ -8,12 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.10.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="OpenTelemetry" Version="1.10.0" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.10.0" />
     <PackageReference Include="OpenTelemetry.Exporter.Zipkin" Version="1.10.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Loggo\Loggo.csproj" />
+    <ProjectReference Include="..\Caffetteria.Core\Caffetteria.Core.csproj" />
   </ItemGroup>
 
 </Project>

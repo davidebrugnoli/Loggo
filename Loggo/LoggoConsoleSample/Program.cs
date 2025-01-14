@@ -1,6 +1,8 @@
 ﻿using Loggo;
 using Loggo.Providers.Implementations;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -11,6 +13,8 @@ internal class Program
 {
     static SemaphoreSlim camerieri = new SemaphoreSlim(5, 5);
     static ILogger logger;
+    private static TracerProvider tracerProvider;
+    private static readonly ActivitySource MyActivitySource = new ActivitySource("LoggoConsoleSample");
     public class Order
     {
         public Guid OrderId { get; set; }
@@ -25,83 +29,116 @@ internal class Program
     private static void Main(string[] args)
     {
         LoggoFactory loggo = new LoggoFactory();
-        loggo.AddProvider(new Loggo.Providers.Implementations.SelilogLoggerProvider(true, "C:\\loggo"));
-        var otelOptions = new OpenTelemetry.Logs.OpenTelemetryLoggerOptions()
-        {
-            IncludeFormattedMessage = true,
-            IncludeScopes = false,
-            ParseStateValues = false
-        };
-        OtelLokiLoggerProvider otelLokiLoggerProvider = new OtelLokiLoggerProvider();
-        otelLokiLoggerProvider.EnableGrafanaLoki();
-        loggo.AddProvider(otelLokiLoggerProvider);
+        loggo.AddProvider(new SelilogLoggerProvider(true, "C:\\loggo"));
+        loggo.AddProvider(new OtelLokiLoggerProvider().EnableGrafanaLoki());
         string org = $"Hamaca1";
         logger = loggo.CreateLogger(org);
 
-        Random random = new Random();
+        tracerProvider = Sdk.CreateTracerProviderBuilder()
+                .AddSource("LoggoConsoleSample")
+                .SetSampler(new AlwaysOnSampler())
+                .AddZipkinExporter()
+                .Build();
 
 
         while (true)
         {
-            TakeOrder().ConfigureAwait(false); 
+            using (var activity = MyActivitySource.StartActivity("Caffetteria"))
+            {
+                TakeOrder().ConfigureAwait(false);
+                DoCoffee().ConfigureAwait(false); 
+            }
         }
 
-    }
-    public static int GenerateEventId()
-    {
-        StackTrace trace = new StackTrace();
-
-        StringBuilder builder = new StringBuilder();
-        builder.Append(Environment.StackTrace);
-
-        foreach (StackFrame frame in trace.GetFrames())
-        {
-            builder.Append(frame.GetILOffset());
-            builder.Append(",");
-        }
-
-        return builder.ToString().GetHashCode() & 0xFFFF;
     }
     private static async Task TakeOrder()
     {
-        try
+        using (var activity = MyActivitySource.StartActivity("TakeOrder"))
         {
-            EventId orderId = new EventId(GenerateEventId());
-            logger.LogDebug(orderId, $"Camerieri disponibili: {camerieri.CurrentCount}/5");
-            camerieri.Wait();
-            Random rand = new Random();
-            await Task.Delay(TimeSpan.FromSeconds(rand.Next(1, 5)));
-            int coffeeCount = rand.Next(1, 4);
-            List<Coffee> coffees = new List<Coffee>();
-            for (int i = 0; i < coffeeCount; i++)
+            try
             {
-                coffees.Add(new Coffee
+                logger.LogDebug($"Camerieri disponibili: {camerieri.CurrentCount}/5");
+                activity?.SetStatus(ActivityStatusCode.Ok, "Waiting for a free waiter...");
+                camerieri.Wait();
+                Random rand = new Random();
+                await Task.Delay(TimeSpan.FromSeconds(rand.Next(1, 5)));
+                if (rand.Next(0, 10) > 7)
                 {
-                    Macchiato = rand.Next(0, 3) > 0
-                });
+                    throw new Exception("BROKEN GLASS");
+                }
+                int coffeeCount = rand.Next(1, 4);
+                List<Coffee> coffees = new List<Coffee>();
+                for (int i = 0; i < coffeeCount; i++)
+                {
+                    coffees.Add(new Coffee
+                    {
+                        Macchiato = rand.Next(0, 3) > 0
+                    });
+                }
+
+                Order order = new Order
+                {
+                    OrderId = Guid.NewGuid(),
+                    TableNumber = rand.Next(1, 10),
+                    Coffees = coffees
+                };
+
+                activity?.SetTag("Order", Newtonsoft.Json.JsonConvert.SerializeObject(order));
+
+
+                logger.LogInformation(coffeeCount.ToString() + " coffees ordered");
+                logger.LogInformation(Newtonsoft.Json.JsonConvert.SerializeObject(order, Newtonsoft.Json.Formatting.Indented));
+
+                _orders.Enqueue(order);
+                activity?.SetStatus(ActivityStatusCode.Ok, "Waiting for a free waiter...");
             }
-
-            Order order = new Order
+            catch (Exception ex)
             {
-                OrderId = Guid.NewGuid(),
-                TableNumber = rand.Next(1, 10),
-                Coffees = coffees
-            };
-
-            logger.LogInformation(orderId, coffeeCount.ToString() + " coffees ordered");
-            logger.LogInformation(orderId, Newtonsoft.Json.JsonConvert.SerializeObject(order, Newtonsoft.Json.Formatting.Indented));
-
-            _orders.Enqueue(order);
+                logger.LogError(ex.Message);
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                activity?.SetTag("error.type", ex.GetType().ToString());
+                activity?.SetTag("error.stacktrace", ex.StackTrace);
+            }
+            finally
+            {
+                camerieri.Release(1);
+            }
         }
-        catch (Exception ex)
+
+
+    }
+    private static async Task DoCoffee()
+    {
+        using (var activity = MyActivitySource.StartActivity("DoCoffee"))
         {
-            logger.LogError(ex.Message);
-        }
-        finally
-        {
-            camerieri.Release(1);
-        }
+            if (_orders.IsEmpty)
+            {
+                logger.LogInformation("No orders to process");
+                return;
+            }
+            else
+            {
+                _orders.TryDequeue(out Order order);
+                if(order != null)
+                {
+                    logger.LogInformation($"Processing order for table {order.TableNumber}");
+                    foreach (var coffee in order.Coffees)
+                    {
+                        Random rand = new Random();
+                        await Task.Delay(TimeSpan.FromSeconds(rand.Next(1, 10)));
+                        logger.LogInformation($"Coffee {(coffee.Macchiato ? "Macchiato" : "Normal")} done for table {order.TableNumber}");
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("No orders to process");
+                    return;
+                }
 
+            }
+            
+
+        }
     }
 
 
